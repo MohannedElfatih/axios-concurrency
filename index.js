@@ -24,21 +24,16 @@ const ConcurrencyManager = (axios, MAX_CONCURRENT = 10, timeout = 0) => {
     },
     // Use as interceptor. Queue outgoing requests
     requestHandler: req => {
-      return new Promise(resolve => {
-        instance.push({ request: req, resolver: resolve })
+      return new Promise(outsideResolve => {
+        setTimeout(() => outsideResolve(new Promise(resolve => {
+          instance.push({ request: req, resolver: resolve });
+        })), timeout);
       });
     },
     // Use as interceptor. Execute queued request upon receiving a response
     responseHandler: res => {
-      if (instance.queue.length == 0) {
-        instance.running.shift();
-        instance.shift();
-      } else {
-        setTimeout(() => {
-          instance.running.shift();
-          instance.shift();
-        }, timeout);
-      }
+      instance.running.shift();
+      instance.shift();
       return res;
     },
     responseErrorHandler: res => {
