@@ -30,6 +30,7 @@ let api = axios.create({
 });
 
 const MAX_CONCURRENT_REQUESTS = 5;
+const TIMEOUT = 2000;
 const manager = ConcurrencyManager(api, MAX_CONCURRENT_REQUESTS);
 
 const server = http.createServer((req, res) => {

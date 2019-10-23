@@ -1,4 +1,4 @@
-const ConcurrencyManager = (axios, MAX_CONCURRENT = 10) => {
+const ConcurrencyManager = (axios, MAX_CONCURRENT = 10, timeout = 0) => {
   if (MAX_CONCURRENT < 1)
     throw "Concurrency Manager Error: minimun concurrent requests is 1";
   let instance = {
@@ -25,13 +25,20 @@ const ConcurrencyManager = (axios, MAX_CONCURRENT = 10) => {
     // Use as interceptor. Queue outgoing requests
     requestHandler: req => {
       return new Promise(resolve => {
-        instance.push({ request: req, resolver: resolve });
+        instance.push({ request: req, resolver: resolve })
       });
     },
     // Use as interceptor. Execute queued request upon receiving a response
     responseHandler: res => {
-      instance.running.shift();
-      instance.shift();
+      if (instance.queue.length == 0) {
+        instance.running.shift();
+        instance.shift();
+      } else {
+        setTimeout(() => {
+          instance.running.shift();
+          instance.shift();
+        }, timeout);
+      }
       return res;
     },
     responseErrorHandler: res => {
